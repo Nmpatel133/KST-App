@@ -1,15 +1,12 @@
-import { Text, View } from "react-native";
+import { View, Text } from 'react-native';
+import { useAuth } from './context/AuthContext';
 
-export default function Index() {
+export default function IndexScreen() {
+  const { user } = useAuth();
+
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>Welcome {user?.email}</Text>
     </View>
   );
 }
