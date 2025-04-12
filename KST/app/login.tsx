@@ -1,58 +1,38 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { ref, set } from 'firebase/database';
-import { auth, database } from './config/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from './config/firebase';
 import { router } from 'expo-router';
 
 export default function LoginScreen() {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [bkmsId, setBkmsId] = useState('');
   const [email, setEmail] = useState('');
+  const [bkmsId, setBkmsId] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignUp = async () => {
-    if (!firstName || !lastName || !bkmsId || !email || !password) {
+  const handleLogin = async () => {
+    if (!email || !bkmsId || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     setIsLoading(true);
     try {
-      console.log('Attempting to create user with email:', email);
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('User created successfully:', userCredential.user.uid);
-      
-      const user = userCredential.user;
-      const userData = {
-        firstName,
-        lastName,
-        bkmsId,
-        email,
-        createdAt: new Date().toISOString(),
-      };
-      
-      console.log('Attempting to save user data:', userData);
-      await set(ref(database, `users/${user.uid}`), userData);
-      console.log('User data saved successfully');
-
-      router.replace('/');
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('User logged in successfully:', userCredential.user.uid);
+      router.replace('/(tabs)/chat');
     } catch (error: any) {
-      console.error('Signup error:', error);
-      let errorMessage = 'An error occurred during sign up.';
+      console.error('Login error:', error);
+      let errorMessage = 'Email, BKMS ID, or password is incorrect.';
       
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'This email is already in use.';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'The email address is invalid.';
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'The password is too weak.';
+      if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Email, BKMS ID, or password is incorrect.';
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'Email, BKMS ID, or password is incorrect.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Email, BKMS ID, or password is incorrect.';
       } else if (error.code === 'auth/network-request-failed') {
         errorMessage = 'Network error. Please check your internet connection.';
-      } else if (error.code === 'auth/operation-not-allowed') {
-        errorMessage = 'Email/password accounts are not enabled.';
       }
       
       Alert.alert('Error', errorMessage);
@@ -64,25 +44,16 @@ export default function LoginScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Welcome to KST App</Text>
-      <Text style={styles.subtitle}>Please create your account</Text>
+      <Text style={styles.subtitle}>Please sign in to continue</Text>
       
       <TextInput
         style={styles.input}
-        placeholder="First Name"
+        placeholder="Email"
         placeholderTextColor="#666"
-        value={firstName}
-        onChangeText={setFirstName}
-        autoCapitalize="words"
-        editable={!isLoading}
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Last Name"
-        placeholderTextColor="#666"
-        value={lastName}
-        onChangeText={setLastName}
-        autoCapitalize="words"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
         editable={!isLoading}
       />
       
@@ -98,17 +69,6 @@ export default function LoginScreen() {
       
       <TextInput
         style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#666"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        editable={!isLoading}
-      />
-      
-      <TextInput
-        style={styles.input}
         placeholder="Password"
         placeholderTextColor="#666"
         value={password}
@@ -119,11 +79,20 @@ export default function LoginScreen() {
       
       <TouchableOpacity 
         style={[styles.button, isLoading && styles.buttonDisabled]} 
-        onPress={handleSignUp}
+        onPress={handleLogin}
         disabled={isLoading}
       >
         <Text style={styles.buttonText}>
-          {isLoading ? 'Creating Account...' : 'Create Account'}
+          {isLoading ? 'Signing In...' : 'Sign In'}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={styles.createAccountButton}
+        onPress={() => router.push('/signup')}
+      >
+        <Text style={styles.createAccountText}>
+          Don't have an account? Create one!
         </Text>
       </TouchableOpacity>
     </ScrollView>
@@ -173,5 +142,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  createAccountButton: {
+    marginTop: 20,
+    padding: 15,
+    alignItems: 'center',
+  },
+  createAccountText: {
+    color: '#007AFF',
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
 }); 

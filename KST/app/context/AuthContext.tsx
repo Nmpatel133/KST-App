@@ -19,8 +19,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user);
       setLoading(false);
       
-      // If user is not authenticated, ensure they're on the login page
-      if (!user) {
+      if (user) {
+        router.replace('/(tabs)/chat');
+      } else {
         router.replace('/login');
       }
     });
@@ -35,6 +36,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
-  return useContext(AuthContext);
-} 
+export const useAuth = () => useContext(AuthContext); 
